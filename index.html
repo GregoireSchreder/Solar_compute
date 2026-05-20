@@ -747,6 +747,121 @@
             color: var(--accent-amber);
             box-shadow: var(--shadow-sm);
         }
+        /* ================================================================
+           RESPONSIVE — SMARTPHONES & PETITS ÉCRANS
+        ================================================================ */
+        
+        /* Transition vers un affichage en colonne pour tablettes et mobiles */
+        @media (max-width: 900px) {
+            .app-layout {
+                flex-direction: column;
+                height: auto;
+                overflow: visible; /* Permet le scroll de toute la page */
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border-soft);
+                box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+                overflow-y: visible;
+            }
+
+            .main-content {
+                overflow-y: visible;
+            }
+
+            /* Réduction des marges/paddings pour gagner de l'espace */
+            header {
+                padding: 0 20px;
+            }
+
+            .s-section {
+                padding: 24px 20px;
+            }
+
+            .s-section:not(:last-child)::after {
+                left: 20px;
+                right: 20px;
+            }
+
+            .charts-area {
+                padding: 20px;
+            }
+
+            /* Les graphiques passent sur une seule colonne */
+            .charts-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .map-wrapper {
+                height: 40vh;
+                min-height: 280px;
+            }
+        }
+
+        /* Ajustements spécifiques pour les très petits écrans (Smartphones) */
+        @media (max-width: 576px) {
+            header {
+                gap: 12px;
+            }
+
+            header h1 {
+                font-size: 18px;
+            }
+
+            .logo-mark {
+                width: 36px;
+                height: 36px;
+            }
+
+            .header-badge {
+                padding: 4px 10px;
+                font-size: 10px;
+            }
+
+            /* Les spécifications de la carte résultat passent en colonne */
+            .res-specs {
+                grid-template-columns: 1fr;
+            }
+
+            /* Réorganisation du widget CO2 pour le centrer */
+            .co2-widget {
+                flex-direction: column;
+                text-align: center;
+                padding: 16px;
+                gap: 12px;
+            }
+
+            .co2-icon {
+                margin: 0 auto;
+            }
+
+            /* Alignement en colonne pour l'indicateur solaire si nécessaire */
+            .solar-box {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            /* Gestion du tableau ROI pour éviter qu'il ne s'écrase (Scroll horizontal) */
+            .roi-card {
+                padding: 16px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch; /* Scroll fluide sur iOS */
+            }
+
+            .roi-table {
+                min-width: 500px; /* Force la table à garder sa lisibilité */
+            }
+
+            .roi-table th, 
+            .roi-table td {
+                padding: 12px;
+            }
+        }
     </style>
 </head>
 <body>
