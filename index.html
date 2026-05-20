@@ -1,990 +1,1318 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SolarSim — Sélecteur d'Éclairage Solaire</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolarSim — Sélecteur d'Éclairage Solaire</title>
 
-  <!-- Google Fonts: Syne (display) + DM Mono (data) + Figtree (body) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=DM+Mono:wght@400;500&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Google Fonts : Syne (display) + DM Mono (data) + Figtree (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=DM+Mono:wght@400;500&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Leaflet CSS + JS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet CSS + JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
 
-  <style>
-    /* ================================================================
-       RESET & CSS VARIABLES
-    ================================================================ */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    <style>
+        /* ================================================================
+           RESET & VARIABLES CSS — Palette professionnelle & apaisée
+        ================================================================ */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    :root {
-      --amber:       #F59E0B;
-      --amber-light: #FEF3C7;
-      --amber-mid:   #FDE68A;
-      --amber-dark:  #B45309;
-      
-      --green:       #10B981;
-      --green-light: #D1FAE5;
-      --green-dark:  #047857;
+        :root {
+            /* Tons neutres dominants */
+            --neutral-50: #F8FAFC;
+            --neutral-100: #F1F5F9;
+            --neutral-200: #E2E8F0;
+            --neutral-300: #CBD5E1;
+            --neutral-400: #94A3B8;
+            --neutral-500: #64748B;
+            --neutral-600: #475569;
+            --neutral-700: #334155;
+            --neutral-800: #1E293B;
+            --neutral-900: #0F172A;
 
-      --blue:        #3B82F6;
+            /* Accents adoucis */
+            --accent-amber: #D97706;
+            --accent-amber-light: #FEF3C7;
+            --accent-amber-dark: #92400E;
+            --accent-green: #059669;
+            --accent-green-light: #D1FAE5;
+            --accent-green-dark: #047857;
+            --accent-blue: #3B82F6;
 
-      --text-main:   #1E293B;
-      --text-muted:  #64748B;
-      --text-light:  #94A3B8;
+            /* Rôles sémantiques */
+            --bg-page: var(--neutral-100);
+            --bg-card: #FFFFFF;
+            --border-soft: var(--neutral-200);
+            --text-main: var(--neutral-800);
+            --text-muted: var(--neutral-500);
+            --text-light: var(--neutral-400);
 
-      --bg-page:     #F8FAFC;
-      --bg-card:     #FFFFFF;
-      --border-soft: #E2E8F0;
+            --sidebar-w: 440px;
+            --header-h: 72px;
 
-      --sidebar-w: 420px;
-      --header-h:  70px;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
 
-      --radius-sm:  8px;
-      --radius-md:  12px;
-      --radius-lg:  20px;
-      
-      --shadow-sm:  0 2px 8px rgba(15, 23, 42, 0.04);
-      --shadow-md:  0 12px 32px rgba(15, 23, 42, 0.06);
-    }
+            --shadow-xs: 0 1px 3px rgba(15, 23, 42, 0.04);
+            --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.05);
+            --shadow-md: 0 10px 25px rgba(15, 23, 42, 0.06);
+        }
 
-    html, body {
-      height: 100%;
-      font-family: 'Figtree', sans-serif;
-      background: var(--bg-page);
-      color: var(--text-main);
-      font-size: 14px;
-      line-height: 1.6;
-    }
+        html,
+        body {
+            height: 100%;
+            font-family: 'Figtree', sans-serif;
+            background: var(--bg-page);
+            color: var(--text-main);
+            font-size: 15px;
+            line-height: 1.6;
+            letter-spacing: -0.01em;
+        }
 
-    /* ================================================================
-       HEADER (Airy & Light)
-    ================================================================ */
-    header {
-      height: var(--header-h);
-      background: var(--bg-card);
-      display: flex;
-      align-items: center;
-      padding: 0 32px;
-      gap: 16px;
-      position: sticky;
-      top: 0;
-      z-index: 2000;
-      box-shadow: var(--shadow-sm);
-    }
+        /* ================================================================
+           HEADER — Léger, structuré, discret
+        ================================================================ */
+        header {
+            height: var(--header-h);
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            padding: 0 36px;
+            gap: 18px;
+            position: sticky;
+            top: 0;
+            z-index: 2000;
+            box-shadow: var(--shadow-xs);
+            border-bottom: 1px solid var(--border-soft);
+        }
 
-    .logo-mark {
-      width: 40px; height: 40px;
-      background: linear-gradient(135deg, var(--amber) 0%, #FCD34D 100%);
-      border-radius: var(--radius-md);
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 12px rgba(245,158,11,0.2);
-    }
-    .logo-mark svg { width: 22px; height: 22px; fill: white; }
+        .logo-mark {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--accent-amber) 0%, #EAB308 100%);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(217, 119, 6, 0.15);
+        }
 
-    header h1 {
-      font-family: 'Syne', sans-serif;
-      font-size: 20px; font-weight: 700;
-      color: var(--text-main);
-      letter-spacing: -0.5px;
-    }
-    header h1 span { color: var(--amber); }
+        .logo-mark svg {
+            width: 22px;
+            height: 22px;
+            fill: white;
+        }
 
-    .header-badge {
-      margin-left: auto;
-      background: var(--bg-page);
-      border: 1px solid var(--border-soft);
-      color: var(--text-muted);
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      padding: 6px 14px; 
-      border-radius: 30px;
-    }
+        header h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 21px;
+            font-weight: 700;
+            color: var(--neutral-800);
+            letter-spacing: -0.5px;
+        }
 
-    /* ================================================================
-       MAIN LAYOUT
-    ================================================================ */
-    .app-layout {
-      display: flex;
-      height: calc(100vh - var(--header-h));
-      overflow: hidden;
-    }
+        header h1 span {
+            color: var(--accent-amber);
+        }
 
-    /* ================================================================
-       SIDEBAR
-    ================================================================ */
-    .sidebar {
-      width: var(--sidebar-w);
-      flex-shrink: 0;
-      background: var(--bg-card);
-      border-right: 1px solid var(--border-soft);
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 4px 0 24px rgba(0,0,0,0.02);
-      z-index: 10;
-    }
+        .header-badge {
+            margin-left: auto;
+            background: var(--neutral-50);
+            border: 1px solid var(--border-soft);
+            color: var(--text-muted);
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            padding: 6px 16px;
+            border-radius: 30px;
+            letter-spacing: 0.3px;
+        }
 
-    .sidebar::-webkit-scrollbar { width: 4px; }
-    .sidebar::-webkit-scrollbar-track { background: transparent; }
-    .sidebar::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 2px; }
+        /* ================================================================
+           LAYOUT PRINCIPAL
+        ================================================================ */
+        .app-layout {
+            display: flex;
+            height: calc(100vh - var(--header-h));
+            overflow: hidden;
+        }
 
-    .s-section {
-      padding: 24px 32px;
-      position: relative;
-    }
-    .s-section:not(:last-child)::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 32px; right: 32px;
-      height: 1px;
-      background: var(--border-soft);
-    }
+        /* ================================================================
+           SIDEBAR — Respirations généreuses
+        ================================================================ */
+        .sidebar {
+            width: var(--sidebar-w);
+            flex-shrink: 0;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-soft);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+            z-index: 10;
+        }
 
-    .s-label {
-      font-family: 'Syne', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-main);
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .s-label span {
-      background: var(--amber-light);
-      color: var(--amber-dark);
-      width: 24px; height: 24px;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 50%;
-      font-size: 11px; font-weight: 800;
-    }
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
 
-    /* Location Card */
-    .loc-card {
-      background: var(--bg-page);
-      border-radius: var(--radius-lg);
-      padding: 16px;
-      border: 1px solid var(--border-soft);
-    }
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
 
-    .loc-coords {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--neutral-300);
+            border-radius: 2px;
+        }
 
-    .coord-item label {
-      display: block;
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
+        .s-section {
+            padding: 28px 36px;
+            position: relative;
+        }
 
-    .coord-val {
-      font-family: 'DM Mono', monospace;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-main);
-    }
+        .s-section:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 36px;
+            right: 36px;
+            height: 1px;
+            background: var(--border-soft);
+        }
 
-    /* Solar indicator */
-    .solar-box {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 14px;
-      background: white;
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-sm);
-    }
+        .s-label {
+            font-family: 'Syne', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
 
-    .solar-val {
-      font-family: 'DM Mono', monospace;
-      font-size: 26px;
-      font-weight: 500;
-      color: var(--amber);
-      line-height: 1;
-    }
+        .s-label span {
+            background: var(--accent-amber-light);
+            color: var(--accent-amber-dark);
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 800;
+        }
 
-    .solar-unit {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
+        /* Carte de localisation */
+        .loc-card {
+            background: var(--neutral-50);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            border: 1px solid var(--border-soft);
+        }
 
-    .solar-quality {
-      margin-left: auto;
-      text-align: right;
-    }
+        .loc-coords {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
 
-    .quality-label {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
+        .coord-item label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-    .quality-val {
-      font-size: 14px;
-      font-weight: 700;
-    }
+        .coord-val {
+            font-family: 'DM Mono', monospace;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
 
-    .hint-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: var(--text-muted);
-      padding: 10px;
-      background: rgba(59,130,246,0.05);
-      border-radius: var(--radius-md);
-    }
+        /* Indicateur solaire */
+        .solar-box {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 18px;
+            background: white;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-xs);
+            border: 1px solid var(--border-soft);
+        }
 
-    .spinner {
-      width: 16px; height: 16px;
-      border: 2px solid var(--border-soft);
-      border-top-color: var(--amber);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+        .solar-val {
+            font-family: 'DM Mono', monospace;
+            font-size: 28px;
+            font-weight: 500;
+            color: var(--accent-amber);
+            line-height: 1;
+        }
 
-    /* ================================================================
-       FORM ELEMENTS
-    ================================================================ */
-    .form-grid { display: flex; flex-direction: column; gap: 20px; }
+        .solar-unit {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
 
-    .form-group label {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-main);
-      margin-bottom: 8px;
-    }
+        .hint-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text-muted);
+            padding: 12px;
+            background: rgba(59, 130, 246, 0.04);
+            border-radius: var(--radius-md);
+            border: 1px dashed var(--neutral-300);
+        }
 
-    .lbl-value {
-      font-family: 'DM Mono', monospace;
-      font-size: 13px;
-      color: var(--amber);
-    }
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-soft);
+            border-top-color: var(--accent-amber);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
 
-    .input-wrap {
-      display: flex;
-      align-items: stretch;
-      background: white;
-      border: 1px solid var(--border-soft);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      transition: all 0.2s;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-    }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
-    .input-wrap:focus-within {
-      border-color: var(--amber);
-      box-shadow: 0 0 0 3px var(--amber-light);
-    }
+        /* ================================================================
+           FORMULAIRES — Épurés
+        ================================================================ */
+        .form-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
 
-    .input-wrap input, .input-wrap select {
-      flex: 1;
-      border: none;
-      background: transparent;
-      padding: 12px 14px;
-      font-size: 15px;
-      font-family: 'DM Mono', monospace;
-      color: var(--text-main);
-      outline: none;
-    }
+        .form-group label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 10px;
+        }
 
-    .input-unit {
-      padding: 0 16px;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-muted);
-      background: var(--bg-page);
-      border-left: 1px solid var(--border-soft);
-      display: flex;
-      align-items: center;
-    }
+        .input-wrap {
+            display: flex;
+            align-items: stretch;
+            background: white;
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-xs);
+        }
 
-    .info-text {
-      font-size: 11px;
-      color: var(--text-light);
-      margin-top: 6px;
-      display: block;
-    }
+        .input-wrap:focus-within {
+            border-color: var(--accent-amber);
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.08);
+        }
 
-    /* Toggle buttons */
-    .toggle-row { display: flex; gap: 8px; background: var(--bg-page); padding: 4px; border-radius: var(--radius-md); }
+        .input-wrap input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 14px 16px;
+            font-size: 15px;
+            font-family: 'DM Mono', monospace;
+            color: var(--text-main);
+            outline: none;
+        }
 
-    .tgl-btn {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      background: transparent;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
+        .input-unit {
+            padding: 0 18px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: var(--neutral-50);
+            border-left: 1px solid var(--border-soft);
+            display: flex;
+            align-items: center;
+        }
 
-    .tgl-btn.active {
-      background: white;
-      color: var(--text-main);
-      box-shadow: var(--shadow-sm);
-    }
+        .info-text {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 8px;
+            display: block;
+        }
 
-    /* Calc button */
-    .calc-btn {
-      width: 100%;
-      padding: 16px;
-      background: var(--text-main);
-      color: white;
-      border: none;
-      border-radius: var(--radius-md);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: all 0.2s;
-      box-shadow: 0 4px 12px rgba(15,23,42,0.15);
-    }
+        /* Boutons à bascule */
+        .toggle-row {
+            display: flex;
+            gap: 6px;
+            background: var(--neutral-100);
+            padding: 5px;
+            border-radius: var(--radius-md);
+        }
 
-    .calc-btn:hover:not(:disabled) { background: #000; transform: translateY(-2px); }
-    .calc-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .tgl-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
 
-    /* ================================================================
-       RESULT CARD (Airy & Eco-focused)
-    ================================================================ */
-    .result-section { display: none; }
-    .result-section.visible { display: block; animation: fadeIn 0.5s ease-out forwards; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tgl-btn.active {
+            background: white;
+            color: var(--text-main);
+            box-shadow: var(--shadow-xs);
+        }
 
-    .result-card {
-      background: white;
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      border: 1px solid var(--border-soft);
-      box-shadow: var(--shadow-md);
-    }
+        /* Bouton principal */
+        .calc-btn {
+            width: 100%;
+            padding: 18px;
+            background: var(--neutral-800);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: background 0.2s, transform 0.15s;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+            letter-spacing: -0.2px;
+        }
 
-    /* CO2 Highlight Widget */
-    .co2-widget {
-      background: linear-gradient(135deg, var(--green-light) 0%, #ECFDF5 100%);
-      border: 1px solid #A7F3D0;
-      border-radius: var(--radius-md);
-      padding: 16px;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
+        .calc-btn:hover:not(:disabled) {
+            background: #0F172A;
+            transform: translateY(-1px);
+        }
 
-    .co2-icon {
-      font-size: 28px;
-      background: white;
-      width: 48px; height: 48px;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 50%;
-      box-shadow: var(--shadow-sm);
-    }
+        .calc-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
 
-    .co2-data { flex: 1; }
-    .co2-val { display: block; font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--green-dark); line-height: 1.1; }
-    .co2-lbl { font-size: 12px; color: var(--green-dark); font-weight: 500; }
-    .co2-trees { font-size: 11px; color: var(--green-dark); margin-top: 4px; opacity: 0.8; }
+        /* ================================================================
+           CARTE RÉSULTAT
+        ================================================================ */
+        .result-section {
+            display: none;
+        }
 
-    .res-name { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
-    .res-type { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+        .result-section.visible {
+            display: block;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
 
-    .res-specs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .spec-item { background: var(--bg-page); border-radius: var(--radius-sm); padding: 12px; border: 1px solid var(--border-soft); }
-    .spec-lbl { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
-    .spec-val { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; color: var(--text-main); }
-    .spec-val small { font-size: 12px; color: var(--text-light); }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-    /* ================================================================
-       MAIN CONTENT (Map & Charts)
-    ================================================================ */
-    .main-content {
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
+        .result-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            border: 1px solid var(--border-soft);
+            box-shadow: var(--shadow-sm);
+        }
 
-    /* Map */
-    .map-wrapper { position: relative; height: 45vh; min-height: 300px; flex-shrink: 0; }
-    #map { height: 100%; width: 100%; }
+        .co2-widget {
+            background: linear-gradient(135deg, var(--accent-green-light) 0%, #ECFDF5 100%);
+            border: 1px solid #A7F3D0;
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
 
-    .map-pill {
-      position: absolute; top: 16px; right: 16px; z-index: 1000;
-      background: white; border-radius: 30px; padding: 8px 16px;
-      font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500;
-      box-shadow: var(--shadow-md);
-    }
+        .co2-icon {
+            font-size: 30px;
+            background: white;
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            box-shadow: var(--shadow-xs);
+        }
 
-    .map-hint-bar {
-      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000;
-      background: var(--text-main); color: white; border-radius: 30px; padding: 10px 24px;
-      font-size: 14px; font-weight: 500; box-shadow: var(--shadow-md); pointer-events: none;
-    }
+        .co2-data {
+            flex: 1;
+        }
 
-    /* Empty state */
-    .empty-state {
-      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 40px; text-align: center;
-    }
-    .empty-state h3 { font-family: 'Syne', sans-serif; font-size: 20px; color: var(--text-main); margin-bottom: 8px; }
-    .empty-state p { font-size: 14px; color: var(--text-muted); max-width: 400px; }
+        .co2-val {
+            display: block;
+            font-family: 'Syne', sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--accent-green-dark);
+            line-height: 1.1;
+        }
 
-    /* Charts Area */
-    .charts-area { padding: 32px; background: var(--bg-page); }
-    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    
-    .chart-card {
-      background: white; border: 1px solid var(--border-soft);
-      border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm);
-    }
-    .chart-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-    .chart-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
-    .chart-wrap { position: relative; height: 220px; }
+        .co2-lbl {
+            font-size: 13px;
+            color: var(--accent-green-dark);
+            font-weight: 500;
+        }
 
-    /* ROI Table */
-    .roi-card { grid-column: 1 / -1; background: white; border: 1px solid var(--border-soft); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); }
-    
-    .roi-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 16px; }
-    .roi-table th { text-align: left; padding: 12px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); border-bottom: 2px solid var(--border-soft); }
-    .roi-table td { padding: 16px; border-bottom: 1px solid var(--bg-page); color: var(--text-main); }
-    .td-label { font-weight: 600; }
-    .td-gain { font-weight: 600; color: var(--green); background: var(--green-light); padding: 6px 12px; border-radius: 20px; font-size: 12px; }
+        .co2-trees {
+            font-size: 12px;
+            color: var(--accent-green-dark);
+            margin-top: 6px;
+            opacity: 0.8;
+        }
 
-    .js-hidden { display: none !important; }
-    .pdf-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 20px;
-  padding: 12px 16px;
-  background: var(--bg-page);
-  color: var(--text-main);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.2s;
-  width: 100%;
-}
+        .res-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
 
-.pdf-btn:hover {
-  background: white;
-  border-color: var(--amber);
-  color: var(--amber);
-  box-shadow: var(--shadow-sm);
-}
-  </style>
+        .res-type {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .res-specs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .spec-item {
+            background: var(--neutral-50);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            border: 1px solid var(--border-soft);
+        }
+
+        .spec-lbl {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .spec-val {
+            font-family: 'DM Mono', monospace;
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .spec-val small {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        /* ================================================================
+           CONTENU PRINCIPAL (Carte + Graphiques)
+        ================================================================ */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: var(--bg-page);
+        }
+
+        /* Carte */
+        .map-wrapper {
+            position: relative;
+            height: 45vh;
+            min-height: 320px;
+            flex-shrink: 0;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .map-pill {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            border-radius: 30px;
+            padding: 10px 20px;
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            font-weight: 500;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-soft);
+        }
+
+        .map-hint-bar {
+            position: absolute;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: var(--neutral-800);
+            color: white;
+            border-radius: 30px;
+            padding: 12px 28px;
+            font-size: 15px;
+            font-weight: 500;
+            box-shadow: var(--shadow-md);
+            pointer-events: none;
+            letter-spacing: -0.2px;
+        }
+
+        /* État vide */
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .empty-state h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 22px;
+            color: var(--text-main);
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 15px;
+            color: var(--text-muted);
+            max-width: 420px;
+            line-height: 1.7;
+        }
+
+        /* Zone des graphiques */
+        .charts-area {
+            padding: 36px;
+            background: var(--bg-page);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+        }
+
+        .chart-card {
+            background: white;
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .chart-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-main);
+        }
+
+        .chart-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .chart-wrap {
+            position: relative;
+            height: 240px;
+        }
+
+        /* Tableau ROI */
+        .roi-card {
+            grid-column: 1 / -1;
+            background: white;
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .roi-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+            margin-top: 20px;
+        }
+
+        .roi-table th {
+            text-align: left;
+            padding: 14px 18px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            border-bottom: 2px solid var(--border-soft);
+            font-weight: 600;
+        }
+
+        .roi-table td {
+            padding: 18px;
+            border-bottom: 1px solid var(--neutral-100);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+
+        .td-label {
+            font-weight: 600;
+        }
+
+        .td-gain {
+            font-weight: 600;
+            color: var(--accent-green);
+            background: var(--accent-green-light);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .js-hidden {
+            display: none !important;
+        }
+
+        .pdf-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 22px;
+            padding: 14px 18px;
+            background: var(--neutral-50);
+            color: var(--text-main);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .pdf-btn:hover {
+            background: white;
+            border-color: var(--accent-amber);
+            color: var(--accent-amber);
+            box-shadow: var(--shadow-sm);
+        }
+    </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<header>
-  <div class="logo-mark">
-    <svg viewBox="0 0 24 24"><path d="M12 2L13.8 7.4H19.5L14.9 10.6L16.7 16L12 12.8L7.3 16L9.1 10.6L4.5 7.4H10.2Z"/></svg>
-  </div>
-  <h1>Solar<span>Sim</span></h1>
-  <div class="header-badge">V1.0</div>
-</header>
-
-<div class="app-layout">
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-
-    <!-- 01 LOCALISATION -->
-    <div class="s-section">
-      <div class="s-label"><span>1</span> Emplacement & Ensoleillement</div>
-      <div class="loc-card">
-        <div class="loc-coords">
-          <div class="coord-item"><label>Latitude</label><div class="coord-val" id="coord-lat">—</div></div>
-          <div class="coord-item"><label>Longitude</label><div class="coord-val" id="coord-lon">—</div></div>
+    <!-- HEADER -->
+    <header>
+        <div class="logo-mark">
+            <svg viewBox="0 0 24 24"><path d="M12 2L13.8 7.4H19.5L14.9 10.6L16.7 16L12 12.8L7.3 16L9.1 10.6L4.5 7.4H10.2Z"/></svg>
         </div>
-        <div id="solar-state">
-          <div class="hint-row">📍 Cliquez sur la carte pour définir la zone</div>
-        </div>
-      </div>
+        <h1>Solar<span>Sim</span></h1>
+        <div class="header-badge">Simulation Annuelle & Écologique</div>
+    </header>
+
+    <div class="app-layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+
+            <!-- 01 LOCALISATION -->
+            <div class="s-section">
+                <div class="s-label"><span>1</span> Emplacement & Ensoleillement</div>
+                <div class="loc-card">
+                    <div class="loc-coords">
+                        <div class="coord-item"><label>Latitude</label><div class="coord-val" id="coord-lat">—</div></div>
+                        <div class="coord-item"><label>Longitude</label><div class="coord-val" id="coord-lon">—</div></div>
+                    </div>
+                    <div id="solar-state">
+                        <div class="hint-row">📍 Cliquez sur la carte pour définir la zone</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 02 PARAMÈTRES -->
+            <div class="s-section">
+                <div class="s-label"><span>2</span> Configuration</div>
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <div class="toggle-row">
+                            <button class="tgl-btn active" id="btn-watts" onclick="setMode('watts')">Puissance (W)</button>
+                            <button class="tgl-btn" id="btn-lumens" onclick="setMode('lumens')">Flux (lm)</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="grp-watts">
+                        <label>Puissance requise</label>
+                        <div class="input-wrap">
+                            <input type="number" id="inp-w" value="30" min="1">
+                            <div class="input-unit">Watts</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group js-hidden" id="grp-lumens">
+                        <label>Flux lumineux requis</label>
+                        <div class="input-wrap">
+                            <input type="number" id="inp-lm" value="3000" min="100">
+                            <div class="input-unit">lm</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Durée d'allumage moy. / nuit</label>
+                        <div class="input-wrap" id="hrs-wrap">
+                            <input type="number" id="inp-hrs" value="12" step="0.1" min="4" max="24">
+                            <div class="input-unit">h/nuit</div>
+                        </div>
+                        <span class="info-text" id="hrs-info">Sera calculé automatiquement selon la latitude moyenne annuelle.</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- CTA -->
+            <div class="s-section">
+                <button class="calc-btn" id="calc-btn" onclick="calculate()" disabled>
+                    Lancer la simulation annuelle
+                </button>
+            </div>
+
+            <!-- 03 RÉSULTAT -->
+            <div class="s-section result-section" id="sec-result">
+                <div class="s-label"><span>3</span> Solution & Impact</div>
+                <div class="result-card">
+
+                    <!-- Focus CO2 -->
+                    <div class="co2-widget">
+                        <div class="co2-icon">🌱</div>
+                        <div class="co2-data">
+                            <span class="co2-val" id="res-co2">— kg</span>
+                            <span class="co2-lbl">de CO₂ évités par an</span>
+                            <div class="co2-trees" id="res-trees">—</div>
+                        </div>
+                    </div>
+
+                    <div class="res-name" id="res-name">—</div>
+                    <a id="res-pdf-btn" href="#" target="_blank" class="pdf-btn" style="display: none;">
+                        📄 Voir la fiche technique (PDF)
+                    </a>
+                    <div class="res-type" id="res-type">—</div>
+
+                    <div class="res-specs">
+                        <div class="spec-item"><div class="spec-lbl">Panneau</div><div class="spec-val" id="res-panel">— <small>Wp</small></div></div>
+                        <div class="spec-item"><div class="spec-lbl">Batterie</div><div class="spec-val" id="res-batt">— <small>Wh</small></div></div>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- CONTENU PRINCIPAL -->
+        <main class="main-content">
+
+            <div class="map-wrapper">
+                <div id="map"></div>
+                <div class="map-pill" id="map-pill">Attente de sélection</div>
+                <div class="map-hint-bar" id="map-hint">Cliquez n'importe où sur la carte pour analyser l'ensoleillement</div>
+            </div>
+
+            <div class="empty-state" id="empty-state">
+                <h3>🌍 Calculez votre impact</h3>
+                <p>Sélectionnez un point sur la carte. Le script calculera la moyenne d'ensoleillement annuelle et simulera une hybridation réseau pour mesurer l'économie réelle.</p>
+            </div>
+
+            <div class="charts-area js-hidden" id="charts-area">
+                <div class="charts-grid">
+
+                    <div class="chart-card">
+                        <div class="chart-title">Autonomie Batterie (Ex. 14 jours hivernaux)</div>
+                        <div class="chart-sub">Comportement du parc avec faible irradiation et recharge réseau si à sec</div>
+                        <div class="chart-wrap"><canvas id="battChart"></canvas></div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-title">Coûts Cumulés (10 ans)</div>
+                        <div class="chart-sub">Solaire Hybride (Ambré) vs Réseau classique (Neutre)</div>
+                        <div class="chart-wrap"><canvas id="costChart"></canvas></div>
+                    </div>
+
+                    <div class="roi-card">
+                        <div class="chart-title">Bilan Économique & Écologique Annuel (Hybride)</div>
+                        <div class="chart-sub">Comparaison intégrant le tirage ponctuel sur le réseau électrique pour le Solaire Hybride.</div>
+
+                        <table class="roi-table">
+                            <thead>
+                                <tr>
+                                    <th>Indicateur</th>
+                                    <th>Réseau Classique</th>
+                                    <th>Solaire Hybride</th>
+                                    <th>Votre Gain (Annuel)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roi-tbody"></tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
     </div>
 
-    <!-- 02 PARAMETRES -->
-    <div class="s-section">
-      <div class="s-label"><span>2</span> Configuration</div>
-      <div class="form-grid">
+    <footer class="schreder-footer">
+        <div class="footer-container">
+            <div class="footer-logo-section">
+                <div class="footer-logo">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path d="M12 2L13.8 7.4H19.5L14.9 10.6L16.7 16L12 12.8L7.3 16L9.1 10.6L4.5 7.4H10.2Z"/>
+                    </svg>
+                    <span>Schréder</span>
+                </div>
+                <p class="footer-tagline">Experts en solutions d'éclairage intelligent et durable.</p>
+            </div>
 
-        <div class="form-group">
-          <div class="toggle-row">
-            <button class="tgl-btn active" id="btn-watts" onclick="setMode('watts')">Puissance (W)</button>
-            <button class="tgl-btn" id="btn-lumens" onclick="setMode('lumens')">Flux (lm)</button>
-          </div>
+            <div class="footer-bottom">
+                <p class="footer-copyright">&copy; 2026 Schréder. Tous droits réservés.</p>
+                <div class="footer-links">
+                    <a href="#privacy">Confidentialité</a>
+                    <a href="#terms">Mentions légales</a>
+                    <a href="#cookies">Cookies</a>
+                </div>
+            </div>
         </div>
+    </footer>
 
-        <div class="form-group" id="grp-watts">
-          <label>Puissance requise</label>
-          <div class="input-wrap">
-            <input type="number" id="inp-w" value="30" min="1">
-            <div class="input-unit">Watts</div>
-          </div>
-        </div>
+    <style>
+        .schreder-footer {
+            --bg-footer: #ffffff;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+            --accent-amber: #D97706;
 
-        <div class="form-group js-hidden" id="grp-lumens">
-          <label>Flux lumineux requis</label>
-          <div class="input-wrap">
-            <input type="number" id="inp-lm" value="3000" min="100">
-            <div class="input-unit">lm</div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>
-            Durée d'allumage moy. / nuit
-          </label>
-          <div class="input-wrap" id="hrs-wrap">
-            <input type="number" id="inp-hrs" value="12" step="0.1" min="4" max="24">
-            <div class="input-unit">h/nuit</div>
-          </div>
-          <span class="info-text" id="hrs-info">Sera calculé automatiquement selon la latitude moyenne annuelle.</span>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- CTA -->
-    <div class="s-section">
-      <button class="calc-btn" id="calc-btn" onclick="calculate()" disabled>
-        Lancer la simulation annuelle
-      </button>
-    </div>
-
-    <!-- 03 RESULTAT -->
-    <div class="s-section result-section" id="sec-result">
-      <div class="s-label"><span>3</span> Solution & Impact</div>
-      <div class="result-card">
-        
-        <!-- CO2 Focus -->
-        <div class="co2-widget">
-          <div class="co2-icon">🌱</div>
-          <div class="co2-data">
-            <span class="co2-val" id="res-co2">— kg</span>
-            <span class="co2-lbl">de CO₂ évités par an</span>
-            <div class="co2-trees" id="res-trees">—</div>
-          </div>
-        </div>
-
-        <div class="res-name" id="res-name">—</div>
-        <a id="res-pdf-btn" href="#" target="_blank" class="pdf-btn" style="display: none;">
-  📄 Voir la fiche technique (PDF)
-</a>
-        <div class="res-type" id="res-type">—</div>
-        
-        <div class="res-specs">
-          <div class="spec-item"><div class="spec-lbl">Panneau</div><div class="spec-val" id="res-panel">— <small>Wp</small></div></div>
-          <div class="spec-item"><div class="spec-lbl">Batterie</div><div class="spec-val" id="res-batt">— <small>Wh</small></div></div>
-        </div>
-      </div>
-    </div>
-
-  </aside>
-
-  <!-- MAIN CONTENT -->
-  <main class="main-content">
-
-    <div class="map-wrapper">
-      <div id="map"></div>
-      <div class="map-pill" id="map-pill">Attente de sélection</div>
-      <div class="map-hint-bar" id="map-hint">Cliquez n'importe où sur la carte pour analyser l'ensoleillement</div>
-    </div>
-
-    <div class="empty-state" id="empty-state">
-      <h3>🌍 Calculez votre impact</h3>
-      <p>Sélectionnez un point sur la carte. Le script calculera la moyenne d'ensoleillement annuelle et la durée moyenne de la nuit locale pour simuler les économies d'énergie et de CO₂.</p>
-    </div>
-
-    <div class="charts-area js-hidden" id="charts-area">
-      <div class="charts-grid">
-
-        <div class="chart-card">
-          <div class="chart-title">Autonomie Batterie (Année moyenne)</div>
-          <div class="chart-sub">Simulation sur 14 jours avec variations météorologiques types</div>
-          <div class="chart-wrap"><canvas id="battChart"></canvas></div>
-        </div>
-
-        <div class="chart-card">
-          <div class="chart-title">Coûts Cumulés (10 ans)</div>
-          <div class="chart-sub">Solaire (Vert) vs Réseau électrique classique (Gris)</div>
-          <div class="chart-wrap"><canvas id="costChart"></canvas></div>
-        </div>
-
-        <div class="roi-card">
-          <div class="chart-title">Bilan Économique & Écologique Annuel</div>
-          <div class="chart-sub">Comparaison entre une solution réseau standard et l'installation solaire recommandée.</div>
-          
-          <table class="roi-table">
-            <thead>
-              <tr>
-                <th>Indicateur</th>
-                <th>Réseau Classique</th>
-                <th>Solaire Schréder</th>
-                <th>Votre Gain</th>
-              </tr>
-            </thead>
-            <tbody id="roi-tbody"></tbody>
-          </table>
-        </div>
-
-      </div>
-    </div>
-
-  </main>
-
-</div>
-<footer class="schreder-footer">
-  <div class="footer-container">
-    <div class="footer-logo-section">
-      <div class="footer-logo">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-          <path d="M12 2L13.8 7.4H19.5L14.9 10.6L16.7 16L12 12.8L7.3 16L9.1 10.6L4.5 7.4H10.2Z"/>
-        </svg>
-        <span>Schréder</span>
-      </div>
-      <p class="footer-tagline">Experts en solutions d'éclairage intelligent et durable.</p>
-    </div>
-    
-    <div class="footer-bottom">
-      <p class="footer-copyright">&copy; 2026 Schréder. Tous droits réservés.</p>
-      <div class="footer-links">
-        <a href="#privacy">Confidentialité</a>
-        <a href="#terms">Mentions légales</a>
-        <a href="#cookies">Cookies</a>
-      </div>
-    </div>
-  </div>
-</footer>
-
-<style>
-  .schreder-footer {
-    --bg-footer: #ffffff;
-    --text-main: #1E293B;
-    --text-muted: #64748B;
-    --border-color: #E2E8F0;
-    --amber: #F59E0B;
-    
-    background-color: var(--bg-footer);
-    color: var(--text-main);
-    padding: 32px 24px;
-    font-family: 'Figtree', sans-serif;
-    border-top: 1px solid var(--border-color);
-  }
-
-  .footer-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-  }
-
-  .footer-logo-section {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .footer-logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 16px;
-    color: var(--text-main);
-  }
-
-  .footer-logo svg {
-    color: var(--amber);
-  }
-
-  .footer-tagline {
-    font-size: 13px;
-    color: var(--text-muted);
-  }
-
-  .footer-bottom {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border-color);
-  }
-
-  .footer-copyright {
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-
-  .footer-links {
-    display: flex;
-    gap: 16px;
-  }
-
-  .footer-links a {
-    font-size: 12px;
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: color 0.2s ease;
-  }
-
-  .footer-links a:hover {
-    color: var(--text-main);
-  }
-
-  /* Version Bureau / Tablette (Écrans > 600px) */
-  @media (min-width: 600px) {
-    .schreder-footer {
-      padding: 40px 32px;
-    }
-    
-    .footer-container {
-      gap: 32px;
-    }
-
-    .footer-bottom {
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-    }
-  }
-</style>
-<script>
-/* ================================================================
-   BASE DE DONNÉES SIMPLIFIÉE
-================================================================ */
-const SOLUTIONS = [
-  { nom: "SUNARIA 70", type: "Tout-en-un", panneau_wp: 70, batterie_wh: 640, pmin: 3, pmax: 24, pdf: "./pdf/SUNARIA_ProductSheet_EN.pdf" },
-  { nom: "VALARA", type: "Colonne cubique", panneau_wp: 160, batterie_wh: 512, pmin: 3, pmax: 34, pdf: "./pdf/VALARA_ProductSheet_EN.pdf" },
-  { nom: "VERTICALIS 150", type: "Colonne carrée", panneau_wp: 160, batterie_wh: 474, pmin: 3, pmax: 51, pdf: "./pdf/VERTICALIS_Sept2024-EN.pdf" },
-  { nom: "VERTICALIS 300", type: "Colonne carrée double", panneau_wp: 320, batterie_wh: 1152, pmin: 6, pmax: 102, pdf: "./pdf/VERTICALIS_Sept2024-EN.pdf" },
-  { nom: "ALTEZZA 150", type: "Luminaire sur mât", panneau_wp: 160, batterie_wh: 512, pmin: 3, pmax: 51, pdf: "./pdf/ALTEZZA_ProductSheet_EN.pdf" },
-  { nom: "FLAMINIA 55", type: "Borne bollard", panneau_wp: 56, batterie_wh: 230, pmin: 6, pmax: 22, pdf: "./pdf/FLAMINIA_ProductSheet_EN.pdf" },
-  { nom: "PROTOS 150", type: "Split panneau orientable", panneau_wp: 150, batterie_wh: 512, pmin: 3, pmax: 51, pdf: "./pdf/PROTOS_February2026_EN.pdf" },
-  { nom: "PREVIA 120", type: "Borne bollard", panneau_wp: 120, batterie_wh: 230, pmin: 2, pmax: 31, pdf: "./pdf/PREVIA_Sept2024-EN.pdf" },
-  { nom: "LALUNA 150", type: "Colonne lumineuse", panneau_wp: 160, batterie_wh: 512, pmin: 2, pmax: 31, pdf: "./pdf/LALUNA_ProductSheet_EN.pdf" },
-  { nom: "ALTARA LINE", type: "Éclairage flexible", panneau_wp: 112, batterie_wh: 537, pmin: 10, pmax: 10, pdf: "./pdf/ALTARA_LINE_ProductSheet_EN.pdf" },
-  { nom: "LUMIELLE 160", type: "Colonne design", panneau_wp: 160, batterie_wh: 512, pmin: 6, pmax: 30, pdf: "./pdf/LUMIELLE_ProductSheet_EN.pdf" }
-];
-
-const state = { lat: null, lon: null, irr: null, mode: 'watts', chartBatt: null, chartCost: null };
-
-/* ================================================================
-   MAP & CALCUL ASTRONOMIQUE
-================================================================ */
-const map = L.map('map', { center: [47.0, 4.0], zoom: 5 });
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© OpenStreetMap © CARTO'
-}).addTo(map);
-
-let marker = null;
-
-// Algorithme de calcul de la nuit moyenne annuelle basé sur l'inclinaison terrestre
-function calculateAverageNight(lat) {
-    let totalNightHours = 0;
-    let daysSampled = 0;
-    for (let day = 1; day <= 365; day += 5) {
-        let declination = 23.44 * Math.sin((360 / 365) * (day - 81) * Math.PI / 180);
-        let latRad = lat * Math.PI / 180;
-        let decRad = declination * Math.PI / 180;
-        let twilightAngle = -6 * Math.PI / 180;
-        let cosOmega = (Math.sin(twilightAngle) - Math.sin(latRad) * Math.sin(decRad)) / (Math.cos(latRad) * Math.cos(decRad));
-        
-        let nightHours;
-        if (cosOmega < -1) { nightHours = 0; }
-        else if (cosOmega > 1) { nightHours = 24; }
-        else {
-            let omega = Math.acos(cosOmega);
-            let dayHours = (2 * omega * 180 / Math.PI) / 15;
-            nightHours = 24 - dayHours;
+            background-color: var(--bg-footer);
+            color: var(--text-main);
+            padding: 36px 28px;
+            font-family: 'Figtree', sans-serif;
+            border-top: 1px solid var(--border-color);
         }
-        totalNightHours += nightHours;
-        daysSampled++;
-    }
-    return (totalNightHours / daysSampled).toFixed(1);
-}
 
-map.on('click', async (e) => {
-  const { lat, lng } = e.latlng;
-  state.lat = lat; state.lon = lng;
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
 
-  if (marker) marker.setLatLng(e.latlng);
-  else marker = L.marker(e.latlng).addTo(map);
+        .footer-logo-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
 
-  document.getElementById('coord-lat').textContent = lat.toFixed(4);
-  document.getElementById('coord-lon').textContent = lng.toFixed(4);
-  document.getElementById('map-pill').textContent = `${lat.toFixed(2)}°N, ${lng.toFixed(2)}°E`;
-  document.getElementById('map-hint').style.display = 'none';
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 17px;
+            color: var(--text-main);
+        }
 
-  const avgNight = calculateAverageNight(lat);
-  const hrsInput = document.getElementById('inp-hrs');
-  hrsInput.value = avgNight;
-  
-  const hrsWrap = document.getElementById('hrs-wrap');
-  hrsWrap.style.boxShadow = "0 0 0 3px var(--amber-light)";
-  hrsWrap.style.borderColor = "var(--amber)";
-  document.getElementById('hrs-info').innerHTML = `Calculé pour cette latitude : <b>${avgNight} h</b> (Moyenne annuelle)`;
-  setTimeout(() => {
-    hrsWrap.style.boxShadow = ""; hrsWrap.style.borderColor = "";
-  }, 800);
+        .footer-logo svg {
+            color: var(--accent-amber);
+        }
 
-  await fetchSolar(lat, lng);
-});
+        .footer-tagline {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
 
-/* ================================================================
-   RECUPERATION ENSEOLEILLEMENT
-================================================================ */
-async function fetchSolar(lat, lon) {
-  const el = document.getElementById('solar-state');
-  el.innerHTML = `<div class="hint-row"><div class="spinner"></div> Analyse annuelle en cours...</div>`;
-  document.getElementById('calc-btn').disabled = true;
+        .footer-bottom {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
 
-  try {
-    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&start_date=2022-01-01&end_date=2022-12-31&daily=shortwave_radiation_sum&timezone=UTC`;
-    const res = await fetch(url);
-    const data = await res.json();
-    const vals = data.daily.shortwave_radiation_sum.filter(v => v !== null);
-    const avgMJ = vals.reduce((a, b) => a + b, 0) / vals.length;
-    state.irr = +(avgMJ * 0.2778).toFixed(2); 
+        .footer-copyright {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
 
-    el.innerHTML = `
-      <div class="solar-box">
-        <div>
-          <div class="solar-val">${state.irr}</div>
-          <div class="solar-unit">kWh/m²/jour (Moy. Annuelle)</div>
-        </div>
-      </div>
-    `;
-  } catch (err) {
-    state.irr = +(Math.max(1.5, 5.5 - Math.abs(lat) * 0.05)).toFixed(2);
-    el.innerHTML = `<div class="solar-box"><div class="solar-val">${state.irr}</div><div class="solar-unit">kWh/m²/jour (Estimé)</div></div>`;
-  }
-  document.getElementById('calc-btn').disabled = false;
-}
+        .footer-links {
+            display: flex;
+            gap: 20px;
+        }
 
-function setMode(mode) {
-  state.mode = mode;
-  document.getElementById('btn-watts').classList.toggle('active', mode === 'watts');
-  document.getElementById('btn-lumens').classList.toggle('active', mode === 'lumens');
-  document.getElementById('grp-watts').classList.toggle('js-hidden', mode !== 'watts');
-  document.getElementById('grp-lumens').classList.toggle('js-hidden', mode !== 'lumens');
-}
+        .footer-links a {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
 
-/* ================================================================
-   MOTEUR DE CALCUL & AFFICHAGE
-================================================================ */
-function calculate() {
-  if (!state.lat || !state.irr) return;
+        .footer-links a:hover {
+            color: var(--text-main);
+        }
 
-  const hoursNight = parseFloat(document.getElementById('inp-hrs').value) || 12;
-  let desiredW = state.mode === 'watts' ? (parseFloat(document.getElementById('inp-w').value) || 30) : (parseFloat(document.getElementById('inp-lm').value) || 3000) / 100;
-  
-  let best = SOLUTIONS.find(s => desiredW >= s.pmin && desiredW <= s.pmax) || SOLUTIONS[0];
+        @media (min-width: 600px) {
+            .schreder-footer {
+                padding: 44px 36px;
+            }
 
-  document.getElementById('sec-result').classList.add('visible');
-  document.getElementById('res-name').textContent = best.nom;
-  document.getElementById('res-type').textContent = best.type;
-  document.getElementById('res-panel').innerHTML = `${best.panneau_wp} <small>Wp</small>`;
-  document.getElementById('res-batt').innerHTML = `${best.batterie_wh} <small>Wh</small>`;
+            .footer-container {
+                gap: 36px;
+            }
 
-  const pdfBtn = document.getElementById('res-pdf-btn');
-  if (best.pdf) {
-    pdfBtn.href = best.pdf;
-    pdfBtn.style.display = 'inline-flex';
-  } else {
-    pdfBtn.style.display = 'none';
-  }
+            .footer-bottom {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+    </style>
 
-  const annKwh = (desiredW / 1000) * hoursNight * 365;
-  const co2Saved = Math.round(annKwh * 0.23);
-  const treesPlanted = Math.max(1, Math.round(co2Saved / 21));
+    <script>
+        /* ================================================================
+           BASE DE DONNÉES SIMPLIFIÉE
+        ================================================================ */
+        const SOLUTIONS = [
+            { nom: "SUNARIA 70", type: "Tout-en-un", panneau_wp: 70, batterie_wh: 640, pmin: 3, pmax: 24, pdf: "./pdf/SUNARIA_ProductSheet_EN.pdf" },
+            { nom: "VALARA", type: "Colonne cubique", panneau_wp: 160, batterie_wh: 512, pmin: 3, pmax: 34, pdf: "./pdf/VALARA_ProductSheet_EN.pdf" },
+            { nom: "VERTICALIS 150", type: "Colonne carrée", panneau_wp: 160, batterie_wh: 474, pmin: 3, pmax: 51, pdf: "./pdf/VERTICALIS_Sept2024-EN.pdf" },
+            { nom: "VERTICALIS 300", type: "Colonne carrée double", panneau_wp: 320, batterie_wh: 1152, pmin: 6, pmax: 102, pdf: "./pdf/VERTICALIS_Sept2024-EN.pdf" },
+            { nom: "ALTEZZA 150", type: "Luminaire sur mât", panneau_wp: 160, batterie_wh: 512, pmin: 3, pmax: 51, pdf: "./pdf/ALTEZZA_ProductSheet_EN.pdf" },
+            { nom: "FLAMINIA 55", type: "Borne bollard", panneau_wp: 56, batterie_wh: 230, pmin: 6, pmax: 22, pdf: "./pdf/FLAMINIA_ProductSheet_EN.pdf" },
+            { nom: "PROTOS 150", type: "Split panneau orientable", panneau_wp: 150, batterie_wh: 512, pmin: 3, pmax: 51, pdf: "./pdf/PROTOS_February2026_EN.pdf" },
+            { nom: "PREVIA 120", type: "Borne bollard", panneau_wp: 120, batterie_wh: 230, pmin: 2, pmax: 31, pdf: "./pdf/PREVIA_Sept2024-EN.pdf" },
+            { nom: "LALUNA 150", type: "Colonne lumineuse", panneau_wp: 160, batterie_wh: 512, pmin: 2, pmax: 31, pdf: "./pdf/LALUNA_ProductSheet_EN.pdf" },
+            { nom: "ALTARA LINE", type: "Éclairage flexible", panneau_wp: 112, batterie_wh: 537, pmin: 10, pmax: 10, pdf: "./pdf/ALTARA_LINE_ProductSheet_EN.pdf" },
+            { nom: "LUMIELLE 160", type: "Colonne design", panneau_wp: 160, batterie_wh: 512, pmin: 6, pmax: 30, pdf: "./pdf/LUMIELLE_ProductSheet_EN.pdf" }
+        ];
 
-  document.getElementById('res-co2').textContent = `${co2Saved} kg`;
-  document.getElementById('res-trees').innerHTML = `Équivaut au pouvoir absorbant de <b>${treesPlanted} arbre${treesPlanted>1?'s':''}</b> 🌳`;
+        const state = { lat: null, lon: null, irr: null, mode: 'watts', chartBatt: null, chartCost: null };
 
-  document.getElementById('empty-state').classList.add('js-hidden');
-  document.getElementById('charts-area').classList.remove('js-hidden');
+        /* ================================================================
+           CARTE & CALCUL ASTRONOMIQUE
+        ================================================================ */
+        const map = L.map('map', { center: [47.0, 4.0], zoom: 5 });
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap © CARTO'
+        }).addTo(map);
 
-  renderCharts(best, desiredW, hoursNight, annKwh, co2Saved, state.irr);
-}
+        let marker = null;
 
-function renderCharts(sol, desiredW, hoursNight, annKwh, co2Saved, irr) {
-  const SYS_EFF = 0.80; 
-  let currentSoC = sol.batterie_wh; 
-  const socPct = [];
+        function calculateAverageNight(lat) {
+            let totalNightHours = 0;
+            let daysSampled = 0;
+            for (let day = 1; day <= 365; day += 5) {
+                let declination = 23.44 * Math.sin((360 / 365) * (day - 81) * Math.PI / 180);
+                let latRad = lat * Math.PI / 180;
+                let decRad = declination * Math.PI / 180;
+                let twilightAngle = -6 * Math.PI / 180;
+                let cosOmega = (Math.sin(twilightAngle) - Math.sin(latRad) * Math.sin(decRad)) / (Math.cos(latRad) * Math.cos(
+                    decRad));
 
-  for (let d = 0; d < 14; d++) {
-    const weatherFactor = 0.2 + (Math.random() * 1.0);
-    const eProd = sol.panneau_wp * irr * SYS_EFF * weatherFactor;
-    const eCons = desiredW * hoursNight;
-    
-    currentSoC = currentSoC + eProd - eCons;
-    
-    if (currentSoC > sol.batterie_wh) currentSoC = sol.batterie_wh;
-    if (currentSoC < 0) currentSoC = 0;
+                let nightHours;
+                if (cosOmega < -1) { nightHours = 0; } else if (cosOmega > 1) { nightHours = 24; } else {
+                    let omega = Math.acos(cosOmega);
+                    let dayHours = (2 * omega * 180 / Math.PI) / 15;
+                    nightHours = 24 - dayHours;
+                }
+                totalNightHours += nightHours;
+                daysSampled++;
+            }
+            return (totalNightHours / daysSampled).toFixed(1);
+        }
 
-    socPct.push(Math.round((currentSoC / sol.batterie_wh) * 100));
-  }
-  
-  if (state.chartBatt) state.chartBatt.destroy();
-  state.chartBatt = new Chart(document.getElementById('battChart'), {
-    type: 'line',
-    data: {
-      labels: Array.from({length: 14}, (_,i) => `J${i+1}`),
-      datasets: [{ label: 'Charge de la batterie (%)', data: socPct, borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4 }]
-    },
-    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100, grid: { display: false } }, x: { grid: { display: false } } } }
-  });
+        map.on('click', async (e) => {
+            const { lat, lng } = e.latlng;
+            state.lat = lat;
+            state.lon = lng;
 
-  const gridCost = Array.from({length: 11}, (_,i) => 1000 + (annKwh * 0.25 + 80) * i);
-  const solarCost = Array.from({length: 11}, (_,i) => 2500 + 30 * i);
+            if (marker) marker.setLatLng(e.latlng);
+            else marker = L.marker(e.latlng).addTo(map);
 
-  if (state.chartCost) state.chartCost.destroy();
-  state.chartCost = new Chart(document.getElementById('costChart'), {
-    type: 'line',
-    data: {
-      labels: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
-      datasets: [
-        { label: 'Réseau (€)', data: gridCost, borderColor: '#94A3B8', borderDash: [5,5], fill: false, tension: 0 },
-        { label: 'Solaire (€)', data: solarCost, borderColor: '#F59E0B', backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0 }
-      ]
-    },
-    options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { display: false } }, x: { grid: { display: false } } } }
-  });
+            document.getElementById('coord-lat').textContent = lat.toFixed(4);
+            document.getElementById('coord-lon').textContent = lng.toFixed(4);
+            document.getElementById('map-pill').textContent = `${lat.toFixed(2)}°N, ${lng.toFixed(2)}°E`;
+            document.getElementById('map-hint').style.display = 'none';
 
-  const annElecCost = annKwh * 0.25;
-  document.getElementById('roi-tbody').innerHTML = `
-    <tr><td class="td-label">Consommation Réseau</td><td>${annKwh.toFixed(0)} kWh/an</td><td>0 kWh</td><td><span class="td-gain">${annKwh.toFixed(0)} kWh évités</span></td></tr>
-    <tr><td class="td-label">Facture Électricité</td><td>${annElecCost.toFixed(0)} €/an</td><td>0 €</td><td><span class="td-gain">+ ${annElecCost.toFixed(0)} €/an</span></td></tr>
-    <tr><td class="td-label">Maintenance Moy.</td><td>~ 80 €/an</td><td>~ 30 €/an</td><td><span class="td-gain">+ 50 €/an</span></td></tr>
-    <tr><td class="td-label">Empreinte Carbone</td><td>${co2Saved} kg CO₂/an</td><td>0 kg CO₂</td><td><span class="td-gain">🌿 ${co2Saved} kg évités</span></td></tr>
-  `;
-}
-</script>
+            const avgNight = calculateAverageNight(lat);
+            const hrsInput = document.getElementById('inp-hrs');
+            hrsInput.value = avgNight;
+
+            const hrsWrap = document.getElementById('hrs-wrap');
+            hrsWrap.style.transition = 'box-shadow 0.2s, border-color 0.2s';
+            hrsWrap.style.boxShadow = "0 0 0 3px rgba(217,119,6,0.12)";
+            hrsWrap.style.borderColor = "var(--accent-amber)";
+            document.getElementById('hrs-info').innerHTML =
+                `Calculé pour cette latitude : <b>${avgNight} h</b> (Moyenne annuelle)`;
+            setTimeout(() => {
+                hrsWrap.style.boxShadow = "";
+                hrsWrap.style.borderColor = "";
+            }, 900);
+
+            await fetchSolar(lat, lng);
+        });
+
+        /* ================================================================
+           RÉCUPÉRATION ENSOLEILLEMENT
+        ================================================================ */
+        async function fetchSolar(lat, lon) {
+            const el = document.getElementById('solar-state');
+            el.innerHTML = `<div class="hint-row"><div class="spinner"></div> Analyse annuelle en cours...</div>`;
+            document.getElementById('calc-btn').disabled = true;
+
+            try {
+                const url =
+                    `https://archive-api.open-meteo.com/v1/archive?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&start_date=2022-01-01&end_date=2022-12-31&daily=shortwave_radiation_sum&timezone=UTC`;
+                const res = await fetch(url);
+                const data = await res.json();
+                const vals = data.daily.shortwave_radiation_sum.filter(v => v !== null);
+                const avgMJ = vals.reduce((a, b) => a + b, 0) / vals.length;
+                state.irr = +(avgMJ * 0.2778).toFixed(2);
+
+                el.innerHTML = `
+                    <div class="solar-box">
+                        <div>
+                            <div class="solar-val">${state.irr}</div>
+                            <div class="solar-unit">kWh/m²/jour (Moy. Annuelle)</div>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                state.irr = +(Math.max(1.5, 5.5 - Math.abs(lat) * 0.05)).toFixed(2);
+                el.innerHTML =
+                    `<div class="solar-box"><div class="solar-val">${state.irr}</div><div class="solar-unit">kWh/m²/jour (Estimé)</div></div>`;
+            }
+            document.getElementById('calc-btn').disabled = false;
+        }
+
+        function setMode(mode) {
+            state.mode = mode;
+            document.getElementById('btn-watts').classList.toggle('active', mode === 'watts');
+            document.getElementById('btn-lumens').classList.toggle('active', mode === 'lumens');
+            document.getElementById('grp-watts').classList.toggle('js-hidden', mode !== 'watts');
+            document.getElementById('grp-lumens').classList.toggle('js-hidden', mode !== 'lumens');
+        }
+
+        /* ================================================================
+           MOTEUR DE CALCUL & AFFICHAGE (AVEC GESTION HYBRIDE / RÉSEAU)
+        ================================================================ */
+        function calculate() {
+            if (!state.lat || !state.irr) return;
+
+            const hoursNight = parseFloat(document.getElementById('inp-hrs').value) || 12;
+            let desiredW = state.mode === 'watts' ?
+                (parseFloat(document.getElementById('inp-w').value) || 30) :
+                (parseFloat(document.getElementById('inp-lm').value) || 3000) / 100;
+
+            let best = SOLUTIONS.find(s => desiredW >= s.pmin && desiredW <= s.pmax) || SOLUTIONS[0];
+
+            const SYS_EFF = 0.80;
+            const eProdDailyBase = best.panneau_wp * state.irr * SYS_EFF;
+            const eConsDaily = desiredW * hoursNight;
+
+            let totalGridWh = 0;
+            let currentSoC = best.batterie_wh;
+
+            for (let d = 0; d < 365; d++) {
+                let seasonFactor = 1 - 0.5 * Math.cos((d + 10) / 365 * 2 * Math.PI);
+                let weatherFactor = seasonFactor * (0.5 + Math.random());
+                let dailyProd = eProdDailyBase * weatherFactor;
+                currentSoC += dailyProd - eConsDaily;
+
+                if (currentSoC < 0) {
+                    totalGridWh += Math.abs(currentSoC);
+                    currentSoC = 0;
+                } else if (currentSoC > best.batterie_wh) {
+                    currentSoC = best.batterie_wh;
+                }
+            }
+
+            const annKwhTotal = (eConsDaily * 365) / 1000;
+            const annGridKwh = totalGridWh / 1000;
+            const annSolarKwh = annKwhTotal - annGridKwh;
+
+            const co2Total = annKwhTotal * 0.23;
+            const co2Hybrid = annGridKwh * 0.23;
+            const co2Saved = Math.round(co2Total - co2Hybrid);
+            const treesPlanted = Math.max(1, Math.round(co2Saved / 21));
+
+            document.getElementById('sec-result').classList.add('visible');
+            document.getElementById('res-name').textContent = best.nom;
+            document.getElementById('res-type').textContent = best.type;
+            document.getElementById('res-panel').innerHTML = `${best.panneau_wp} <small>Wp</small>`;
+            document.getElementById('res-batt').innerHTML = `${best.batterie_wh} <small>Wh</small>`;
+
+            const pdfBtn = document.getElementById('res-pdf-btn');
+            if (best.pdf) {
+                pdfBtn.href = best.pdf;
+                pdfBtn.style.display = 'inline-flex';
+            } else {
+                pdfBtn.style.display = 'none';
+            }
+
+            document.getElementById('res-co2').textContent = `${co2Saved} kg`;
+            document.getElementById('res-trees').innerHTML =
+                `Équivaut au pouvoir absorbant de <b>${treesPlanted} arbre${treesPlanted>1?'s':''}</b> 🌳`;
+
+            document.getElementById('empty-state').classList.add('js-hidden');
+            document.getElementById('charts-area').classList.remove('js-hidden');
+
+            renderCharts(best, desiredW, hoursNight, annKwhTotal, annGridKwh, co2Total, co2Hybrid, co2Saved, state.irr);
+        }
+
+        function renderCharts(sol, desiredW, hoursNight, annKwhTotal, annGridKwh, co2Total, co2Hybrid, co2Saved, irr) {
+            const SYS_EFF = 0.80;
+            let currentSoC = sol.batterie_wh;
+            const socPct = [];
+            const labels = [];
+
+            for (let d = 1; d <= 10; d++) {
+                const weatherFactor = 0.15 + (Math.random() * 0.4);
+                const eProd = sol.panneau_wp * irr * SYS_EFF * weatherFactor;
+                const eCons = desiredW * hoursNight;
+
+                currentSoC += eProd;
+                if (currentSoC > sol.batterie_wh) currentSoC = sol.batterie_wh;
+                socPct.push(Math.round((currentSoC / sol.batterie_wh) * 100));
+                labels.push(`J${d} Day`);
+
+                currentSoC -= eCons;
+                if (currentSoC < 0) currentSoC = 0;
+                socPct.push(Math.round((currentSoC / sol.batterie_wh) * 100));
+                labels.push(`J${d} Night`);
+            }
+
+            if (state.chartBatt) state.chartBatt.destroy();
+            state.chartBatt = new Chart(document.getElementById('battChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Charge de la batterie (%)',
+                        data: socPct,
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5,150,105,0.08)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: 0, max: 100, grid: { display: false } }, x: { grid: { display: false },
+                            ticks: { font: { size: 10 } } } }
+                }
+            });
+
+            const standardCost10Y = Array.from({ length: 11 }, (_, i) => 1000 + (annKwhTotal * 0.25 + 80) * i);
+            const hybridCost10Y = Array.from({ length: 11 }, (_, i) => 2500 + (annGridKwh * 0.25 + 30) * i);
+
+            if (state.chartCost) state.chartCost.destroy();
+            state.chartCost = new Chart(document.getElementById('costChart'), {
+                type: 'line',
+                data: {
+                    labels: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+                    datasets: [
+                        { label: 'Réseau Classique (€)', data: standardCost10Y, borderColor: '#94A3B8',
+                            borderDash: [5, 5], fill: false, tension: 0 },
+                        { label: 'Solaire Hybride (€)', data: hybridCost10Y, borderColor: '#D97706',
+                            backgroundColor: 'rgba(217,119,6,0.08)', fill: true, tension: 0 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { display: false } },
+                        x: { grid: { display: false } } } }
+            });
+
+            const annElecCost = annKwhTotal * 0.25;
+            const hybridElecCost = annGridKwh * 0.25;
+            const gainElecCost = annElecCost - hybridElecCost;
+            const gainKwh = annKwhTotal - annGridKwh;
+
+            document.getElementById('roi-tbody').innerHTML = `
+                <tr>
+                    <td class="td-label">Consommation Réseau</td>
+                    <td>${annKwhTotal.toFixed(0)} kWh/an</td>
+                    <td>${annGridKwh.toFixed(0)} kWh/an</td>
+                    <td><span class="td-gain">${gainKwh.toFixed(0)} kWh évités</span></td>
+                </tr>
+                <tr>
+                    <td class="td-label">Facture Électricité (@0.25€)</td>
+                    <td>${annElecCost.toFixed(0)} €/an</td>
+                    <td>${hybridElecCost.toFixed(0)} €/an</td>
+                    <td><span class="td-gain">+ ${gainElecCost.toFixed(0)} €/an</span></td>
+                </tr>
+                <tr>
+                    <td class="td-label">Maintenance Moyenne</td>
+                    <td>~ 80 €/an</td>
+                    <td>~ 30 €/an</td>
+                    <td><span class="td-gain">+ 50 €/an</span></td>
+                </tr>
+                <tr>
+                    <td class="td-label">Empreinte Carbone</td>
+                    <td>${Math.round(co2Total)} kg CO₂/an</td>
+                    <td>${Math.round(co2Hybrid)} kg CO₂/an</td>
+                    <td><span class="td-gain">🌿 ${co2Saved} kg évités</span></td>
+                </tr>
+            `;
+        }
+    </script>
 </body>
 </html>
